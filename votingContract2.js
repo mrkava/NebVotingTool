@@ -1,19 +1,19 @@
 // Voting system on Nebulas blockchain
 
 var Poll = function(data) {
-		this.votedUsersCount = new BigNumber(0);
-		this.votedAdressesList = [];
-		this.id = data.id;
-		this.pollVariants = data.pollVariants;
-		this.pollResults = {};
-		var that = this;
-		data.pollVariants.forEach(function(variant) {
-			that.pollResults[variant] = 0;
-		});
-		this.pollName = data.name;
-		this.pollCreator = data.creatorAddress;
-		this.votingPrice = data.price;
-		this.maxVotersNumber = data.maxVotersNumber;
+	this.votedUsersCount = new BigNumber(0);
+	this.votedAdressesList = [];
+	this.id = data.id;
+	this.pollVariants = data.pollVariants;
+	this.pollResults = {};
+	var that = this;
+	data.pollVariants.forEach(function(variant) {
+		that.pollResults[variant] = 0;
+	});
+	this.pollName = data.name;
+	this.pollCreator = data.creatorAddress;
+	this.votingPrice = data.price;
+	this.maxVotersNumber = data.maxVotersNumber;
 }
 
 Poll.prototype = {
@@ -38,7 +38,7 @@ VotingContract.prototype = {
 	if (variants && variants.length && Array.isArray(variants)) {
 		poll_data.pollVariants = variants;
 	} else {
-		throw new Error("Poll variants array not provided");
+		throw new Error("Poll variants array not provided.");
 	}
 	
 	if (name) {
@@ -46,21 +46,22 @@ VotingContract.prototype = {
 		defined_name = defined_name.length > 50 ? defined_name.substr(0,49) : defined_name;
 		poll_data.name = defined_name;
 	} else {
-		throw new Error("Poll name not provided");
+		throw new Error("Poll name not provided.");
 	}
 	
-	if (price) {
+	if (price !== undefined) {
 		var defined_voting_price = parseFloat(String(price));
+        defined_voting_price = defined_voting_price >= 0 ? defined_voting_price : 0;
 		poll_data.price = new BigNumber(defined_voting_price);
 	} else {
-		throw new Error("Poll voting price not provided");
+		throw new Error("Poll voting price not provided.");
 	}
 	
 	if (maxVoters) {
 		var defined_max_voters = parseInt(String(maxVoters));
 		poll_data.maxVotersNumber = new BigNumber(defined_max_voters);
 	} else {
-		throw new Error("Poll voting price not provided");
+		throw new Error("Max numbers of voters not provided.");
 	}
 	poll_data.creatorAddress = Blockchain.transaction.from;
 	poll_data.id = Blockchain.transaction.from + 'poll' + this.polls_number;
@@ -72,6 +73,35 @@ VotingContract.prototype = {
 
   requestPoll: function(pollId) {
 	  return this.polls.get(pollId);
+  },
+
+  vote: function(pollId, voteVariant) {
+	  var poll = this.polls.get(pollId);
+	  if (poll) {
+	  	if (poll.votedAdressesList.indexOf(Blockchain.transaction.from) !== -1) {
+            throw new Error("The address already voted in this poll.");
+		}
+
+		if (!(new BigNumber(poll.maxVotersNumber).gt(new BigNumber(poll.votedUsersCount)))) {
+            throw new Error("Sorry, no more votes are accepted in this poll.");
+		}
+
+		if (new BigNumber(Blockchain.transaction.value).lt(new BigNumber(poll.votingPrice))) {
+		    throw new Error("You must pay small fee to submit your vote. Voting price is " + poll.votingPrice);
+		}
+
+	  	if (poll.pollResults[voteVariant] !== undefined) {
+            poll.pollResults[voteVariant] = new BigNumber(poll.pollResults[voteVariant]).plus(1);
+            poll.votedAdressesList.push(Blockchain.transaction.from);
+            poll.votedUsersCount = new BigNumber(poll.votedUsersCount).plus(1);
+            this.polls.put(poll.id, poll);
+		} else {
+            throw new Error("Voting variant is not valid.");
+		}
+	  } else {
+          throw new Error("Poll ID is not correct.");
+	  }
+	   
   }
 }
 

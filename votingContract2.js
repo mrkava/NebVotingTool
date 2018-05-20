@@ -33,10 +33,17 @@ VotingContract.prototype = {
   },
   
   createPoll: function(name, variants, price, maxVoters) {
+	if (Blockchain.transaction.value !== 0) { 
+        throw new Error("Creating poll is free! Set transaction value to 0!");
+    }  
 	var poll_data = {};
 	
 	if (variants && variants.length && Array.isArray(variants)) {
-		poll_data.pollVariants = variants;
+		if (variants.length < 31) {
+			poll_data.pollVariants = variants;
+		} else {
+			throw new Error("Maximum 30 poll variants is allowed.");
+		}
 	} else {
 		throw new Error("Poll variants array not provided.");
 	}
@@ -85,9 +92,11 @@ VotingContract.prototype = {
 		if (!(new BigNumber(poll.maxVotersNumber).gt(new BigNumber(poll.votedUsersCount)))) {
             throw new Error("Sorry, no more votes are accepted in this poll.");
 		}
+		
+		var nas_transaction_value = new BigNumber(Blockchain.transaction.value).div(new BigNumber(10).pow(18));
 
-		if (new BigNumber(Blockchain.transaction.value).lt(new BigNumber(poll.votingPrice))) {
-		    throw new Error("You must pay small fee to submit your vote. Voting price is " + poll.votingPrice);
+		if (nas_transaction_value.lt(new BigNumber(poll.votingPrice))) {
+		    throw new Error("You must pay small fee to submit your vote. Voting price for this poll is " + poll.votingPrice + " NAS");
 		}
 
 	  	if (poll.pollResults[voteVariant] !== undefined) {
@@ -98,10 +107,10 @@ VotingContract.prototype = {
 		} else {
             throw new Error("Voting variant is not valid.");
 		}
+		return poll;
 	  } else {
           throw new Error("Poll ID is not correct.");
 	  }
-	   
   }
 }
 

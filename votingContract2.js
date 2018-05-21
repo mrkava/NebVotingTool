@@ -14,6 +14,8 @@ var Poll = function(data) {
 	this.pollCreator = data.creatorAddress;
 	this.votingPrice = data.price;
 	this.maxVotersNumber = data.maxVotersNumber;
+    this.endDate = data.endDate;
+    this.endDateTimestamp = data.endDateTimestamp;
 }
 
 Poll.prototype = {
@@ -32,7 +34,7 @@ VotingContract.prototype = {
 	  this.polls_number = new BigNumber(0);
   },
   
-  createPoll: function(name, variants, price, maxVoters) {
+  createPoll: function(name, variants, price, maxVoters, endDate) {
 	if (Blockchain.transaction.value !== 0) { 
         throw new Error("Creating poll is free! Set transaction value to 0!");
     }  
@@ -70,6 +72,26 @@ VotingContract.prototype = {
 	} else {
 		throw new Error("Max numbers of voters not provided.");
 	}
+
+	if (endDate) {
+		var date_string = new Date(endDate);
+		if (!isNaN(date_string)) {
+            var now = Date.now();
+            var d_utc = Date.UTC(date_string.getUTCFullYear(), date_string.getUTCMonth(), date_string.getUTCDate(), 23, 59, 59);
+
+            if (now > d_utc) {
+                throw new Error("End date must be in future.");
+			} else {
+                poll_data.endDate = date_string;
+                poll_data.endDateTimestamp = d_utc;
+			}
+		} else {
+          	throw new Error("End date is not valid.");
+		}
+	} else {
+        throw new Error("End date not provided.");
+    }
+
 	poll_data.creatorAddress = Blockchain.transaction.from;
 	poll_data.id = Blockchain.transaction.from + 'poll' + this.polls_number;
 	var newPoll = new Poll(poll_data);

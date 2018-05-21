@@ -2,6 +2,8 @@
 
 var Poll = function(data) {
 	this.votedUsersCount = new BigNumber(0);
+	this.votersPayments = new BigNumber(0);
+	this.wasWithdrawalProceeded = false;
 	this.votedAdressesList = [];
 	this.id = data.id;
 	this.pollVariants = data.pollVariants;
@@ -35,7 +37,7 @@ VotingContract.prototype = {
   },
   
   createPoll: function(name, variants, price, maxVoters, endDate) {
-	if (Blockchain.transaction.value !== 0) { 
+	if (!Blockchain.transaction.value.eq(0)) { 
         throw new Error("Creating poll is free! Set transaction value to 0!");
     }  
 	var poll_data = {};
@@ -101,7 +103,16 @@ VotingContract.prototype = {
   },
 
   requestPoll: function(pollId) {
-	  return this.polls.get(pollId);
+	  var poll_response = {};
+	  var poll = this.polls.get(pollId);
+	  if (poll) {
+		  poll_response.poll = poll;
+		  poll_response.isPollEndDateActive = new BigNumber(poll.endDateTimestamp).gt(new BigNumber(Date.now()));
+		  poll_response.maxVotersLimit = new BigNumber(poll.maxVotersNumber).gt(new BigNumber(poll.votedUsersCount));
+		  return poll_response; 
+	  } else {
+		  throw new Error("Poll ID is not correct.");
+	  }
   },
 
   vote: function(pollId, voteVariant) {
@@ -120,11 +131,16 @@ VotingContract.prototype = {
 		if (nas_transaction_value.lt(new BigNumber(poll.votingPrice))) {
 		    throw new Error("You must pay small fee to submit your vote. Voting price for this poll is " + poll.votingPrice + " NAS");
 		}
+		
+		if(new BigNumber(poll.endDateTimestamp).lt(new BigNumber(Date.now()))) {
+			throw new Error("Sorry, no more votes are accepted in this poll.");
+		}
 
 	  	if (poll.pollResults[voteVariant] !== undefined) {
             poll.pollResults[voteVariant] = new BigNumber(poll.pollResults[voteVariant]).plus(1);
             poll.votedAdressesList.push(Blockchain.transaction.from);
             poll.votedUsersCount = new BigNumber(poll.votedUsersCount).plus(1);
+			poll.votersPayments = new BigNumber(poll.votersPayments).plus(Blockchain.transaction.value);
             this.polls.put(poll.id, poll);
 		} else {
             throw new Error("Voting variant is not valid.");
@@ -133,6 +149,37 @@ VotingContract.prototype = {
 	  } else {
           throw new Error("Poll ID is not correct.");
 	  }
+  },
+  withdraw: function(pollId) {
+	if (!Blockchain.transaction.value.eq(0)) { 
+        throw new Error("Withdrawal is free! Set transaction value to 0!");
+    }  
+	 var poll = this.polls.get(pollId);
+	 
+	 if (!poll) {
+		throw new Error("Poll ID is not correct.");
+	 }
+	
+     if (Blockchain.transaction.from !== poll.pollCreator) {
+		throw new Error("Only poll creator could withdraw funds."); 
+	 }
+	 
+	 if (poll.wasWithdrawalProceeded) {
+		throw new Error("Withdrawal from this poll has been proceeded already.");
+	 }
+	 
+	 if (new BigNumber(poll.endDateTimestamp).lt(new BigNumber(Date.now())) || new BigNumber(poll.maxVotersNumber).eq(new BigNumber(poll.votedUsersCount))){
+       var transferResult = Blockchain.transfer(poll.pollCreator, new BigNumber(poll.votersPayments));
+       if (!transferResult) {
+         throw new Error("Unable to process withdrawal, please try again later.");
+       } else {
+		  poll.wasWithdrawalProceeded = true;
+		  this.polls.put(poll.id, poll);
+		  return [transferResult, poll.pollCreator, new BigNumber(poll.votersPayments)];
+       }
+     } else {
+         throw new Error("Poll is not completed, withdrawal is not available.");  
+       }
   }
 }
 

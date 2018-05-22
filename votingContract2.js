@@ -167,6 +167,10 @@ VotingContract.prototype = {
 	 if (poll.wasWithdrawalProceeded) {
 		throw new Error("Withdrawal from this poll has been proceeded already.");
 	 }
+
+      if (new BigNumber(poll.votersPayments).eq(0)) {
+          throw new Error("No payments were made for this poll");
+      }
 	 
 	 if (new BigNumber(poll.endDateTimestamp).lt(new BigNumber(Date.now())) || new BigNumber(poll.maxVotersNumber).eq(new BigNumber(poll.votedUsersCount))){
        var transferResult = Blockchain.transfer(poll.pollCreator, new BigNumber(poll.votersPayments));
@@ -175,7 +179,6 @@ VotingContract.prototype = {
        } else {
 		  poll.wasWithdrawalProceeded = true;
 		  this.polls.put(poll.id, poll);
-		  return [transferResult, poll.pollCreator, new BigNumber(poll.votersPayments)];
        }
      } else {
          throw new Error("Poll is not completed, withdrawal is not available.");  

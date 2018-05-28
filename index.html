@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Bootstrap Example</title>
+  <title>NebVoter</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
@@ -9,12 +9,28 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <style>
     /* Remove the navbar's default margin-bottom and rounded borders */ 
+	body {
+	   font-family: "Verdana", sans-serif;	
+	}
+	
     .navbar {
       margin-bottom: 0;
       border-radius: 0;
       background-color: #2cc185;
 	  padding: 5px 40px 2px 0;
     }
+	
+	.navbar-inverse a.navbar-brand {
+	  color: #FFFFFF;
+	 
+	  font-size: 2.2rem;
+	  font-weight: 600;
+	}
+	
+	.navbar-brand.brand-discription	{
+	  color: #FFFFFF;
+	  font-size: 1.5rem;
+	}
 	
 	.navbar-nav > .active > a.nav-link, .navbar-nav > .active > a.nav-link:hover, .navbar-nav > .active > a.nav-link:visited {
 	  background-color: #FFFFFF;
@@ -23,36 +39,46 @@
 	
 	.navbar-nav> li > a.nav-link {
 	  color: #FFFFFF;
-	  font-family: "Raleway", sans-serif;
-      font-size: 1.708rem;
+      font-size: 1.6rem;
 	  font-weight: 600;
 	  line-height: 54px;
-	  min-width: 120px;
+	  min-width: 85px;
 	  padding: 0 17px;
 	  text-align: center;
 	}
 	
-	.navbar-nav> li > a.nav-link:hover {
+	.nav-link .glyphicon {
+	  margin-right: 6px;
+      font-size: 1.2em;
+	}
+	
+	.navbar-nav > li > a.nav-link:hover {
 	  background-color: transparent;
       color: #337f61;
+	}
+	
+	.main-poll label.control-label {
+	  text-align: left;
 	}
     
     /* Set height of the grid so .sidenav can be 100% (adjust as needed) */
     .row.content {height: 450px}
     
-    /* Set gray background color and 100% height */
-    .sidenav {
-      padding-top: 20px;
-      background-color: #f1f1f1;
-      height: 100%;
-    }
-    
-    /* Set black background color, white text and some padding */
     footer {
-      background-color: #555;
-      color: white;
-      padding: 15px;
+      background-color: #2cc185;
+      color: #FFFFFF;
+      padding: 5px;
     }
+	
+	.bold {
+	  font-weight: 600;	
+	}
+	
+	.form-subtitle {
+	  padding-bottom: 15px;
+	  border-bottom: 1px solid #e6e6e6;
+	  margin-bottom: 15px;
+	}
     
     /* On small screens, set height to 'auto' for sidenav and grid */
     @media screen and (max-width: 767px) {
@@ -74,14 +100,14 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>                        
       </button>
-      <a class="navbar-brand" href="#">Logo</a>
+      <a class="navbar-brand" href="#">NebVoter</a><span class="navbar-brand brand-discription">Voting tool on Nebulas blockchain</span>
     </div>
     <div class="collapse navbar-collapse" id="myNavbar">
       <ul class="nav navbar-nav navbar-right" >
-        <li class="active"><a href="#" class="nav-link">Home</a></li>
-        <li><a href="#" class="nav-link">About</a></li>
-        <li><a href="#" class="nav-link">Projects</a></li>
-        <li><a href="#" class="nav-link">Contact</a></li>
+        <li class="active"><a href="#" class="nav-link"><span class="glyphicon glyphicon-home"></span>Home</a></li>
+        <li><a href="#" class="nav-link"><span class="glyphicon glyphicon-list-alt"></span>Work with poll</a></li>
+        <li><a href="#" class="nav-link"><span class="glyphicon glyphicon-question-sign"></span>Help</a></li>
+        <li><a href="#" class="nav-link"><span class="glyphicon glyphicon-envelope"></span>Contact</a></li>
       </ul>
     </div>
   </div>
@@ -90,18 +116,59 @@
 <div class="container-fluid text-center">    
   <div class="row content">
     <div class="col-sm-5 col-sm-offset-1 text-left"> 
-      <h1>Welcome</h1>
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-      <hr>
-      <h3>Test</h3>
-      <p>Lorem ipsum...</p>
+      <h2>Welcome to NebVoter</h2>
+      <p><span class="bold">NebVoter</span> is a voting tool based on the Nebulas blockchain. Using blockchain we can guarantee transperancy of the voting.</p>
+	  <p>There are another voting sites and tools, but NebVoter has several key advanages:</p>
+	  <ul>
+	  <li>voting is processed on Nebulas blockchain</li>
+	  <li>every Nebulas address could vote only once</li>
+	  <li>every Nebulas user can create his one voting polls for free</li>
+	  <li>while creating poll you can set voting price - to prevent scum voting from empty addresses or to use poll for some crowd funding</li>
+	  <li>you can set maximum numbers of voters and final date of voting</li>
+	  <li>when the poll is closed, the poll creator could withdraw funds received from voters</li>
+	  </ul>
+	  <p class="bold">To create your own poll on NebVoter please use the form on the right!</p>
     </div>
-	<div class="col-sm-5 text-left"> 
-      <h1>Welcome</h1>
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-      <hr>
-      <h3>Test</h3>
-      <p>Lorem ipsum...</p>
+	<div class="col-sm-4 col-sm-offset-1 text-left"> 
+      <h2>Create your poll</h2>
+      <div class="form-subtitle">Fill all poll details in form and click Submit button!</div>
+	  <form class="form-horizontal main-poll">
+                  <div class="form-group">
+                    <label for="pollName" class="control-label col-sm-3">Poll name</label>
+                    <div class="col-sm-8">
+                      <input id="pollName" type="text" placeholder="Enter poll name" class="form-control">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="pollMaxVoters" class="control-label col-sm-3">Maximum number of voters</label>
+                    <div class="col-sm-8">
+                      <input id="pollMaxVoters" type="number" min="1" class="form-control" value="1">
+                    </div>
+                  </div>
+				   <div class="form-group">
+                    <label for="pollPrice" class="control-label col-sm-3">Voting price</label>
+                    <div class="col-sm-8">
+                      <input id="pollPrice" type="number" min="0" class="form-control" value="0">
+                    </div>
+                  </div>
+				  <div class="form-group">
+                    <label for="pollEndDate" class="control-label col-sm-3">Poll end date</label>
+                    <div class="col-sm-8">
+                      <input id="pollEndDate" type="date" class="form-control">
+                    </div>
+                  </div>
+				  <div>Poll answer options:</div>
+                    <div class="col-sm-8">
+                      <input type="text" placeholder="Enter poll name" class="form-control" placeholder="Enter poll option">
+                  </div>
+                  <div class="row">
+                    <div class="col-6">
+                      <p class="text-right">
+                        <button type="submit" class="btn btn-space btn-success">Create poll</button>
+                      </p>
+                    </div>
+                  </div>
+                </form>
     </div>
   </div>
 </div>

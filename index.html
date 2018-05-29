@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
   <style>
     /* Remove the navbar's default margin-bottom and rounded borders */ 
 	body {
@@ -60,6 +61,10 @@
 	.main-poll label.control-label {
 	  text-align: left;
 	}
+	
+	.poll-answer-header {
+	  margin-bottom: 10px;
+	}
     
     /* Set height of the grid so .sidenav can be 100% (adjust as needed) */
     .row.content {height: 450px}
@@ -72,6 +77,14 @@
 	
 	.bold {
 	  font-weight: 600;	
+	}
+	
+	.poll-save-button {
+	  text-align: right;
+	}
+	
+	.poll-buttons {
+	  margin-top: 25px;
 	}
 	
 	.form-subtitle {
@@ -129,43 +142,51 @@
 	  </ul>
 	  <p class="bold">To create your own poll on NebVoter please use the form on the right!</p>
     </div>
-	<div class="col-sm-4 col-sm-offset-1 text-left"> 
+	<div class="col-sm-4 col-sm-offset-1 text-left" id="app"> 
       <h2>Create your poll</h2>
       <div class="form-subtitle">Fill all poll details in form and click Submit button!</div>
-	  <form class="form-horizontal main-poll">
+	  <form class="form-horizontal main-poll" @submit.prevent>
                   <div class="form-group">
-                    <label for="pollName" class="control-label col-sm-3">Poll name</label>
+                    <label for="pollName" class="control-label col-sm-4">Poll name</label>
                     <div class="col-sm-8">
-                      <input id="pollName" type="text" placeholder="Enter poll name" class="form-control">
+                      <input id="pollName" type="text" placeholder="Enter poll name" class="form-control" v-model="pollName" required>
                     </div>
                   </div>
                   <div class="form-group">
-                    <label for="pollMaxVoters" class="control-label col-sm-3">Maximum number of voters</label>
+                    <label for="pollMaxVoters" class="control-label col-sm-4">Maximum number of voters</label>
                     <div class="col-sm-8">
-                      <input id="pollMaxVoters" type="number" min="1" class="form-control" value="1">
+                      <input id="pollMaxVoters" type="number" min="1" class="form-control" v-model="pollMaxVoters"  required>
                     </div>
                   </div>
 				   <div class="form-group">
-                    <label for="pollPrice" class="control-label col-sm-3">Voting price</label>
+                    <label for="pollPrice" class="control-label col-sm-4">Voting price (NAS)</label>
                     <div class="col-sm-8">
-                      <input id="pollPrice" type="number" min="0" class="form-control" value="0">
+                      <input id="pollPrice" type="number" min="0" class="form-control" v-model="pollPrice"  required>
                     </div>
                   </div>
 				  <div class="form-group">
-                    <label for="pollEndDate" class="control-label col-sm-3">Poll end date</label>
+                    <label for="pollEndDate" class="control-label col-sm-4">Poll end date</label>
                     <div class="col-sm-8">
-                      <input id="pollEndDate" type="date" class="form-control">
+                      <input id="pollEndDate" type="date" class="form-control" v-model="pollEndDate"  required>
                     </div>
                   </div>
-				  <div>Poll answer options:</div>
-                    <div class="col-sm-8">
-                      <input type="text" placeholder="Enter poll name" class="form-control" placeholder="Enter poll option">
+				  <div class="poll-answer-header bold">Poll answer options:</div>
+				  <div v-for="(variant, index) in pollOptions">
+				  <div class="form-group">
+                    <div class="col-sm-11">
+                      <input type="text" class="form-control" placeholder="Enter poll option" v-model="pollOptions[index]">
                   </div>
-                  <div class="row">
-                    <div class="col-6">
-                      <p class="text-right">
-                        <button type="submit" class="btn btn-space btn-success">Create poll</button>
-                      </p>
+				  <div class="col-sm-1">
+                      <span @click="removePollOption(index)">-</span>
+                  </div>
+				  </div>
+				  </div>
+                  <div class="form-group poll-buttons">
+					<div class="col-sm-4">
+                        <button class="btn btn-space btn-primary" @click="addPollOption">Add poll answer</button>
+                    </div>
+                    <div class="col-sm-offset-4 col-sm-4 poll-save-button">
+                        <button class="btn btn-space btn-success" @click="savePoll">Create poll</button>
                     </div>
                   </div>
                 </form>
@@ -177,5 +198,37 @@
   <p>Footer Text</p>
 </footer>
 
+<script type="text/javascript">
+        var app = new Vue({
+            el: "#app",
+            data: {
+                pollOptions: ["", ""],
+				pollOptions2: 3,
+				pollName: "",
+				pollMaxVoters: 1,
+				pollPrice: 0,
+				pollEndDate: ""
+            },
+            methods: {
+                savePoll: function() {
+                    console.log({
+						name: pollName.value,
+						maxVoters: pollMaxVoters.value,
+						price: pollPrice.value,
+						endDate: pollEndDate.value,
+						variants: this.pollOptions.filter(function(opt) {
+							return opt !== "";
+						})
+					});
+                },
+				addPollOption: function() {
+					this.pollOptions.push("");
+				},
+				removePollOption: function(index) {
+					this.pollOptions.splice(index, 1);
+				}
+            }
+        });
+    </script>
 </body>
 </html>

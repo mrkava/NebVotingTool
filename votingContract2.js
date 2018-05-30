@@ -1,4 +1,4 @@
-// Voting system on Nebulas blockchain
+// NebVote - Voting system on Nebulas blockchain
 
 var Poll = function(data) {
 	this.votedUsersCount = new BigNumber(0);

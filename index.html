@@ -102,7 +102,12 @@
 	  border-bottom: 1px solid #e6e6e6;
 	  margin-bottom: 15px;
 	}
-    
+	
+	.web-wallet-warning {
+	  margin-top: 20px;
+	  font-size: 1.4em;
+	}
+
     /* On small screens, set height to 'auto' for sidenav and grid */
     @media screen and (max-width: 767px) {
       .sidenav {
@@ -153,7 +158,9 @@
 	  <p class="bold">To create your own poll on NebVoter please use the form on the right!</p>
     </div>
 	<div class="col-sm-4 col-sm-offset-1 text-left" id="app"> 
-      <h2>Create your poll</h2>
+	  <div v-if="!checkNebulasExtensionWallet()" class="alert alert-warning web-wallet-warning">Please install <a href="https://github.com/ChengOrangeJu/WebExtensionWallet">Nebulas Web Extension wallet.</a></div>	
+       <div v-if="checkNebulasExtensionWallet()">
+	  <h2>Create your poll</h2>
       <div class="form-subtitle">Fill all poll details in form and click Submit button!</div>
 	  <form class="form-horizontal main-poll" @submit.prevent="savePoll">
                   <div class="form-group" :class="{'has-error': errors.has('pollName') }">
@@ -161,7 +168,7 @@
                     <div class="col-sm-8">
                       <input id="pollName" name="pollName" type="text" placeholder="Enter poll name"  maxlength="50"
 					  class="form-control" v-model="pollName" v-validate="{required: true}" >
-					<p class="text-danger" v-if="errors.has('pollName')">{{ errors.first('pollName') }}</p>  
+					<p class="text-danger" v-if="errors.has('pollName')">The Poll Name field is required.</p>  
                     </div>
                   </div>
                   <div class="form-group" :class="{'has-error': errors.has('pollMaxVoters') }">
@@ -169,7 +176,7 @@
                     <div class="col-sm-8">
                       <input id="pollMaxVoters" name="pollMaxVoters" type="number" min="1" class="form-control" 
 					  v-model="pollMaxVoters" v-validate="{required: true, min_value: 1, numeric: true}">
-					  <p class="text-danger" v-if="errors.has('pollMaxVoters')">{{ errors.first('pollMaxVoters') }}</p> 
+					  <p class="text-danger" v-if="errors.has('pollMaxVoters')">The Poll Maximum Voters field is required.</p> 
                     </div>
                   </div>
 				   <div class="form-group" :class="{'has-error': errors.has('pollPrice') }">
@@ -177,7 +184,7 @@
                     <div class="col-sm-8">
                       <input id="pollPrice" type="number" min="0" class="form-control" name="pollPrice"
 					  v-model="pollPrice" v-validate="{required: true, min_value: 0, decimal: true}">
-					  <p class="text-danger" v-if="errors.has('pollPrice')">{{ errors.first('pollPrice') }}</p> 
+					  <p class="text-danger" v-if="errors.has('pollPrice')">The Poll Price field is required.</p> 
                     </div>
                   </div>
 				  <div class="form-group" :class="{'has-error': errors.has('pollEndDate') }">
@@ -185,16 +192,17 @@
                     <div class="col-sm-8">
                       <input id="pollEndDate" type="date" class="form-control" name="pollEndDate"
 					  v-model="pollEndDate" v-validate="{required: true}">
-					  <p class="text-danger" v-if="errors.has('pollEndDate')">{{ errors.first('pollEndDate') }}</p> 
+					  <p class="text-danger" v-if="errors.has('pollEndDate')">The Poll End Date field is required.</p> 
                     </div>
                   </div>
 				  <div class="poll-answer-header bold">Poll answer options:</div>
 				  <div v-for="(variant, index) in pollOptions">
-				  <div class="form-group">
+				  <div class="form-group" :class="{'has-error': errors.has('name_' + index) }">
                     <div class="col-sm-11">
                       <input type="text" class="form-control" placeholder="Enter poll option" 
 					  v-model="pollOptions[index]" v-validate="{required: true}"
-					  :name="'name_'+index">
+					  :name="'name_' + index">
+					   <p class="text-danger" v-if="errors.has('name_' + index)">Poll option field is required.</p>
                   </div>
 				  <div class="col-sm-1">
                       <span class="glyphicon glyphicon-minus-sign remove-poll-variant" @click="removePollOption(index)" v-if='pollOptions.length > 2 '></span>
@@ -213,6 +221,7 @@
                     </div>
                   </div>
                 </form>
+				</div>
     </div>
   </div>
 </div>
@@ -221,13 +230,18 @@
   <p>Footer Text</p>
 </footer>
 
+<script src=nebPay.min.js></script>
 <script type="text/javascript">
+		var dappAddress = "n1xcCKoVJYmN83iZA6PeAs79stGQNJjGSvV";
+		
+		var NebPay = require("nebpay");
+        var nebPay = new NebPay();
+		
 		Vue.use(VeeValidate);
         var app = new Vue({
             el: "#app",
             data: {
                 pollOptions: ["", ""],
-				pollOptions2: 3,
 				pollName: "",
 				pollMaxVoters: 1,
 				pollPrice: 0,
@@ -254,15 +268,14 @@
 				},
 				removePollOption: function(index) {
 					this.pollOptions.splice(index, 1);
+				},
+				checkNebulasExtensionWallet: function() {
+					return typeof(webExtensionWallet) !== "undefined";
 				}
             }
         });
-		//https://jsfiddle.net/logaretm/kt5ah3ux/1/
-		//https://date-fns.org/v2.0.0-alpha.7/docs/format
-		//https://baianat.github.io/vee-validate/guide/conditional-and-looping-inputs.html
-		//https://codepen.io/olayinkaos/pen/GMmpPm?editors=1010
-		//https://blog.logrocket.com/an-imperative-guide-to-forms-in-vue-js-7536bfa374e0
-		//https://m.dotdev.co/form-validation-using-vue-js-2-35abd6b18c5d
+		//https://github.com/hardlydifficult/HardlySocialNebulas/blob/master/index.html
+		//https://cryptopoll.herokuapp.com/lib/crypto-poll.js
     </script>
 </body>
 </html>

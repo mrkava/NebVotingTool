@@ -103,7 +103,7 @@
 	  margin-bottom: 15px;
 	}
 	
-	.web-wallet-warning {
+	.alert-margin {
 	  margin-top: 20px;
 	  font-size: 1.4em;
 	}
@@ -158,10 +158,11 @@
 	  <p class="bold">To create your own poll on NebVoter please use the form on the right!</p>
     </div>
 	<div class="col-sm-4 col-sm-offset-1 text-left" id="app"> 
-	  <div v-if="!checkNebulasExtensionWallet()" class="alert alert-warning web-wallet-warning">Please install <a href="https://github.com/ChengOrangeJu/WebExtensionWallet">Nebulas Web Extension wallet.</a></div>	
-       <div v-if="checkNebulasExtensionWallet()">
+	  <div v-if="!checkNebulasExtensionWallet()" class="alert alert-warning alert-margin">Please install <a href="https://github.com/ChengOrangeJu/WebExtensionWallet">Nebulas Web Extension wallet.</a></div>	
+       <div v-if="checkNebulasExtensionWallet() && !createdPollId">
 	  <h2>Create your poll</h2>
-      <div class="form-subtitle">Fill all poll details in form and click Submit button!</div>
+      <div class="form-subtitle">Fill all poll details in form and click "Create poll" button!</div>
+	  <div v-if="contractError" class="alert alert-danger alert-margin">{{contractError}}</div>	
 	  <form class="form-horizontal main-poll" @submit.prevent="savePoll">
                   <div class="form-group" :class="{'has-error': errors.has('pollName') }">
                     <label for="pollName" class="control-label col-sm-4">Poll name</label>
@@ -176,13 +177,13 @@
                     <div class="col-sm-8">
                       <input id="pollMaxVoters" name="pollMaxVoters" type="number" min="1" class="form-control" 
 					  v-model="pollMaxVoters" v-validate="{required: true, min_value: 1, numeric: true}">
-					  <p class="text-danger" v-if="errors.has('pollMaxVoters')">The Poll Maximum Voters field is required.</p> 
+					  <p class="text-danger" v-if="errors.has('pollMaxVoters')">The Poll Maximum Voters field is required and should be integer</p> 
                     </div>
                   </div>
 				   <div class="form-group" :class="{'has-error': errors.has('pollPrice') }">
                     <label for="pollPrice" class="control-label col-sm-4">Voting price (NAS)</label>
                     <div class="col-sm-8">
-                      <input id="pollPrice" type="number" min="0" class="form-control" name="pollPrice"
+                      <input id="pollPrice" type="number" step="0.001" class="form-control" name="pollPrice"
 					  v-model="pollPrice" v-validate="{required: true, min_value: 0, decimal: true}">
 					  <p class="text-danger" v-if="errors.has('pollPrice')">The Poll Price field is required.</p> 
                     </div>
@@ -222,6 +223,9 @@
                   </div>
                 </form>
 				</div>
+			<div v-if="createdPollId" class="alert alert-success alert-margin">
+			Your poll was successfully created! Poll ID is {{createdPollId}}
+			</div>		
     </div>
   </div>
 </div>
@@ -232,12 +236,13 @@
 
 <script src=nebPay.min.js></script>
 <script type="text/javascript">
-		var dappAddress = "n1xcCKoVJYmN83iZA6PeAs79stGQNJjGSvV";
+		var contract_address = "n1xcCKoVJYmN83iZA6PeAs79stGQNJjGSvV";
 		
 		var NebPay = require("nebpay");
         var nebPay = new NebPay();
 		
 		Vue.use(VeeValidate);
+		
         var app = new Vue({
             el: "#app",
             data: {
@@ -245,21 +250,18 @@
 				pollName: "",
 				pollMaxVoters: 1,
 				pollPrice: 0,
-				pollEndDate: ""
+				pollEndDate: "",
+				contractError: "",
+				createdPollId: null
             },
             methods: {
                 savePoll: function() {
 					this.$validator.validateAll().then(function(result) {
 						if (result) {
-							console.log({
-								name: pollName.value,
-								maxVoters: pollMaxVoters.value,
-								price: pollPrice.value,
-								endDate: pollEndDate.value,
-								variants: app.pollOptions.filter(function(opt) {
-									return opt !== "";
-						})
-					});
+							nebPay.simulateCall(contract_address, 0, "createPoll", app.getPollArgumets(),   
+								{
+									listener: app.onCreatePoll
+								});
 						}
 					});
                 },
@@ -271,7 +273,32 @@
 				},
 				checkNebulasExtensionWallet: function() {
 					return typeof(webExtensionWallet) !== "undefined";
-				}
+				},
+				getPollArgumets: function() {
+				   var pollVariants = app.pollOptions.filter(function(opt) {
+									return opt !== "";
+						});
+				   var args = [];
+							args.push(pollName.value, pollVariants, pollPrice.value, 
+									  pollMaxVoters.value, pollEndDate.value);
+							return JSON.stringify(args);
+				},
+				onCreatePoll: function(response) {
+				  if (response.execute_err !== "") {
+					this.contractError = response.result;
+					console.log(this.contractError);
+				  } else {
+					this.contractError = null;
+					nebPay.call(contract_address, 0, "createPoll", app.getPollArgumets(),   
+								{
+									listener: function(response) {
+										if (response.execute_err === "") {
+											this.createdPollId = JSON.parse(response.result);
+										}
+									}
+								});
+				  }
+			   }
             }
         });
 		//https://github.com/hardlydifficult/HardlySocialNebulas/blob/master/index.html

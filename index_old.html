@@ -9,7 +9,6 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue"></script>
   <script src="https://cdn.jsdelivr.net/npm/vee-validate@latest/dist/vee-validate.js"></script>
-  <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
   <style>
     /* Remove the navbar's default margin-bottom and rounded borders */ 
 	body {
@@ -121,7 +120,6 @@
 </head>
 <body>
 
-<div id='app'>
 <nav class="navbar navbar-inverse">
   <div class="container-fluid">
     <div class="navbar-header">
@@ -134,20 +132,15 @@
     </div>
     <div class="collapse navbar-collapse" id="myNavbar">
       <ul class="nav navbar-nav navbar-right" >
-        <li class="active"><router-link to="/"><span class="glyphicon glyphicon-home"></span>Home</router-link></li>
-        <li><router-link class="nav-link" to="/kal"><span class="glyphicon glyphicon-list-alt"></span>Work with poll</router-lin</li>
+        <li class="active"><a href="#" class="nav-link"><span class="glyphicon glyphicon-home"></span>Home</a></li>
+        <li><a href="#" class="nav-link"><span class="glyphicon glyphicon-list-alt"></span>Work with poll</a></li>
         <li><a href="#" class="nav-link"><span class="glyphicon glyphicon-question-sign"></span>Help</a></li>
         <li><a href="#" class="nav-link"><span class="glyphicon glyphicon-envelope"></span>Contact</a></li>
       </ul>
     </div>
   </div>
 </nav>
-
-
-	<router-view></router-view>
-</div>
   
-<template id='main-page'>
 <div class="container-fluid text-center">    
   <div class="row content">
     <div class="col-sm-5 col-sm-offset-1 text-left"> 
@@ -166,7 +159,7 @@
 	  <p>You must have Nebulas Web Extension wallet installed to use NebVoter.</p>
 	  <p>To use existing poll - Work with poll</p>
     </div>
-	<div class="col-sm-4 col-sm-offset-1 text-left"> 
+	<div class="col-sm-4 col-sm-offset-1 text-left" id="app"> 
 	  <div v-if="!checkNebulasExtensionWallet()" class="alert alert-warning alert-margin">Please install <a href="https://github.com/ChengOrangeJu/WebExtensionWallet">Nebulas Web Extension wallet.</a></div>	
        <div v-if="checkNebulasExtensionWallet() && !createdPollId">
 	  <h2>Create your poll</h2>
@@ -238,7 +231,6 @@
     </div>
   </div>
 </div>
-</template>
 
 <footer class="container-fluid text-center">
   <p>Footer Text</p>
@@ -252,32 +244,25 @@
         var nebPay = new NebPay();
 		
 		Vue.use(VeeValidate);
-		Vue.use(VueRouter);
 		
-		var Kal =  { template: '<div>foo</div>' };
-		
-		var Main = Vue.component('main-page',{
-			template:'#main-page',
-			data: function(){
-				return {
-					pollOptions: ["", ""],
-					pollName: "",
-					pollMaxVoters: 1,
-					pollPrice: 0,
-					pollEndDate: "",
-					contractError: "",
-					createdPollId: null
-				}
-			},
-			props:['label','value'],
-			methods:{
-				savePoll: function() {
-					var self = this;
+        var app = new Vue({
+            el: "#app",
+            data: {
+                pollOptions: ["", ""],
+				pollName: "",
+				pollMaxVoters: 1,
+				pollPrice: 0,
+				pollEndDate: "",
+				contractError: "",
+				createdPollId: null
+            },
+            methods: {
+                savePoll: function() {
 					this.$validator.validateAll().then(function(result) {
 						if (result) {
-							nebPay.simulateCall(contract_address, 0, "createPoll", self.getPollArgumets(),   
+							nebPay.simulateCall(contract_address, 0, "createPoll", app.getPollArgumets(),   
 								{
-									listener: self.onCreatePoll
+									listener: app.onCreatePoll
 								});
 						}
 					});
@@ -292,7 +277,7 @@
 					return typeof(webExtensionWallet) !== "undefined";
 				},
 				getPollArgumets: function() {
-				   var pollVariants = this.pollOptions.filter(function(opt) {
+				   var pollVariants = app.pollOptions.filter(function(opt) {
 									return opt !== "";
 						});
 				   var args = [];
@@ -301,38 +286,21 @@
 							return JSON.stringify(args);
 				},
 				onCreatePoll: function(response) {
-					var self = this;
 				  if (response.execute_err !== "") {
-					this.contractError = response.result;
-					console.log(this.contractError);
+					app.contractError = response.result;
+					console.log(app.contractError);
 				  } else {
-					this.contractError = null;
-					nebPay.call(contract_address, 0, "createPoll", this.getPollArgumets(),   
+					app.contractError = null;
+					nebPay.call(contract_address, 0, "createPoll", app.getPollArgumets(),   
 								{
 									listener: function(resp) {
 										console.log(response);
-										self.createdPollId = JSON.parse(response.result);
+										app.createdPollId = JSON.parse(response.result);
 									}
 								});
 				  }
 			   }
-			},
-		});
-		
-		var routes = [
-			  { path: '/', component: Main },
-			  { path: '/kal', component: Kal }
-			];
-			
-		var router = new VueRouter({
-				  routes: routes
-				});
-		
-        var app = new Vue({
-            el: "#app",
-			router: router,
-            data: {},
-            methods: {}
+            }
         });
 		//https://github.com/hardlydifficult/HardlySocialNebulas/blob/master/index.html
 		//https://cryptopoll.herokuapp.com/lib/crypto-poll.js

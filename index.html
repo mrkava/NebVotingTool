@@ -261,20 +261,30 @@
 
 <script id="poll-details" type="text/x-template">
 <div class="container-fluid">
-	<div class="row ">
+	<div class="row" v-if="selectedPoll === null">
 		<div class="col-sm-7 col-sm-offset-2">
-		<h2>Work with pole</h2>
+		<h2>Work with poll</h2>
 		<p>On this page you can work with specific poll - check results, vote and withdraw funds if poll is already close.
-			To work with poll, enter the poll ID in the input field below and click GO!</p>
+			To work with poll, <span class="bold">enter the poll ID in the input field below and click GO!</span></p>
 			<div class="col-sm-7 col-sm-offset-2 poll-input">
 				<div class="input-group">
-				   <input type="text" class="form-control" id="pollId" name="pollId" placeholder="Enter poll ID...">
+				   <input type="text" class="form-control" id="pollId" name="pollId" placeholder="Enter poll ID..." 
+				   v-model="pollId" v-validate="{required: true}">
 				   <span class="input-group-btn">
-						<button class="btn btn-success" type="button">GO!</button>
+						<button class="btn btn-success" type="button" v-on:click='getPoll'>GO!</button>
 				   </span>
 				</div>
+				<p class="text-danger" v-if="errors.has('pollId') || pollIdError">Please enter valid poll ID</p> 
 			</div>
 		</div>
+	</div>
+	<div class="row" v-if="selectedPoll !== null">
+		<div class="col-sm-7 col-sm-offset-2">
+		<h2>POLL: {{selectedPoll.poll.pollName}}</h2>	
+		</div>
+		 <div v-for="(value, key) in selectedPoll.poll.pollResults">
+			<div></div>
+		 </div>
 	</div>
 </div>
 </script>
@@ -355,14 +365,51 @@
 			},
 		});
 		
-				
+		//n1KCbiKqnD3vQQTB4Ni7yXWNss6ePnHBPqupoll5		
 		var Poll = Vue.component('poll-details',{
 			template:'#poll-details',
+			created: function() {
+				console.log(this.$route.params.pollId);
+				if (this.$route.params.pollId) {
+						this.pollId = this.$route.params.pollId;
+						this.getPoll();
+				} else {
+					this.pollId = "";
+				}
+			},
+			beforeRouteUpdate (to, from, next) {
+				if (to.params.pollId) {
+						this.pollId = to.params.pollId;
+						this.getPoll();
+				} 
+				next();
+			},
 			data: function(){
 				return {
+					pollIdError: "",
+					selectedPoll: null
 				}
 			},
 			methods:{
+				getPoll: function() {
+					var self = this;					
+					this.$validator.validateAll().then(function(poll_id){
+						nebPay.simulateCall(contract_address, 0, "requestPoll", JSON.stringify([self.pollId]),   
+								{
+									listener: self.onGetPoll
+								});
+					});
+				}, 
+				onGetPoll: function(response) {
+				console.log("onGetPoll", response);
+					if (response.execute_err !== "") {
+						this.pollIdError = "Please enter valid Poll ID."
+					} else {
+						this.pollIdError = "";
+						this.selectedPoll = JSON.parse(response.result);
+						console.log(this.selectedPoll);
+					}
+				}
 			}
 		});
 		

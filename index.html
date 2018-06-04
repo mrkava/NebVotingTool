@@ -283,7 +283,16 @@
 		<h2>POLL: {{selectedPoll.poll.pollName}}</h2>	
 		</div>
 		 <div v-for="(value, key) in selectedPoll.poll.pollResults">
-			<div></div>
+			<div class="row">
+				<div class="col-sm-3 col-sm-offset-1">
+					<div class="progress">
+					  <div class="progress-bar progress-bar-success" role="progressbar"
+					  aria-valuemin="0" aria-valuemax="100" v-bind:style="{ width: votedWidth(value) }">
+						 {{ value + " votes : " + votedWidth(value) }}
+					  </div>
+					</div>
+				</div>
+			</div>
 		 </div>
 	</div>
 </div>
@@ -401,14 +410,21 @@
 					});
 				}, 
 				onGetPoll: function(response) {
-				console.log("onGetPoll", response);
+					console.log("onGetPoll", response);
 					if (response.execute_err !== "") {
 						this.pollIdError = "Please enter valid Poll ID."
 					} else {
 						this.pollIdError = "";
 						this.selectedPoll = JSON.parse(response.result);
+						this.selectedPoll.poll.votedUsersCount = 10; // mock
+						this.selectedPoll.poll.pollResults = {"f" : "2", "g": "3", "h": "5", "z": 0}; // mock
 						console.log(this.selectedPoll);
 					}
+				},
+				votedWidth: function(value) {
+					var width = this.selectedPoll.poll.votedUsersCount === "0" ? 0 : Math.floor((+value / +this.selectedPoll.poll.votedUsersCount) * 100);
+					console.log(width + "%");
+					return width + "%";
 				}
 			}
 		});
